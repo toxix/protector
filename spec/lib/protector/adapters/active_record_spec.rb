@@ -51,12 +51,12 @@ if defined?(ActiveRecord)
 
     describe Protector::Adapters::ActiveRecord do
       it "finds out whether object is AR relation" do
-        Protector::Adapters::ActiveRecord.is?(Dummy).should == true
-        Protector::Adapters::ActiveRecord.is?(Dummy.every).should == true
+        expect(Protector::Adapters::ActiveRecord.is?(Dummy)).to be true
+        expect(Protector::Adapters::ActiveRecord.is?(Dummy.every)).to be true
       end
 
       it "sets the adapter" do
-        Dummy.restrict!('!').protector_meta.adapter.should == Protector::Adapters::ActiveRecord
+        expect(Dummy.restrict!('!').protector_meta.adapter).to be Protector::Adapters::ActiveRecord
       end
     end
 
@@ -65,13 +65,13 @@ if defined?(ActiveRecord)
     #
     describe Protector::Adapters::ActiveRecord::Base do
       it "includes" do
-        Dummy.ancestors.should include(Protector::Adapters::ActiveRecord::Base)
+        expect(Dummy.ancestors).to include(Protector::Adapters::ActiveRecord::Base)
       end
 
       it "scopes" do
         scope = Dummy.restrict!('!')
-        scope.should be_a_kind_of ActiveRecord::Relation
-        scope.protector_subject.should == '!'
+        expect(scope).to be_a_kind_of ActiveRecord::Relation
+        expect(scope.protector_subject).to eq '!'
       end
 
       it_behaves_like "a model"
@@ -82,7 +82,7 @@ if defined?(ActiveRecord)
         end
 
         instance = dummy.restrict!('!').create(string: 'test')
-        instance.errors[:base].should == ["Access denied to 'string'"]
+        expect(instance.errors[:base]).to eq ["Access denied to 'string'"]
         instance.delete
       end
 
@@ -100,10 +100,10 @@ if defined?(ActiveRecord)
         end
 
         result = dummy.restrict!('!').new do |instance|
-          instance.protector_subject.should == '!'
+          expect(instance.protector_subject).to eq '!'
         end
 
-        result.protector_subject.should == '!'
+        expect(result.protector_subject).to eq '!'
       end
 
       it "finds with scope on id column" do
@@ -124,7 +124,7 @@ if defined?(ActiveRecord)
         end
 
         instance = dummy.restrict!('!').new(string: 'test')
-        instance.save.should == true
+        expect(instance.save).to be true
         instance.delete
       end
     end
@@ -134,122 +134,122 @@ if defined?(ActiveRecord)
     #
     describe Protector::Adapters::ActiveRecord::Relation do
       it "includes" do
-        Dummy.none.ancestors.should include(Protector::Adapters::ActiveRecord::Base)
+        expect(Dummy.none.ancestors).to include(Protector::Adapters::ActiveRecord::Base)
       end
 
       it "saves subject" do
-        Dummy.restrict!('!').where(number: 999).protector_subject.should == '!'
-        Dummy.restrict!('!').except(:order).protector_subject.should == '!'
-        Dummy.restrict!('!').only(:order).protector_subject.should == '!'
+        expect(Dummy.restrict!('!').where(number: 999).protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').except(:order).protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').only(:order).protector_subject).to eq '!'
       end
 
       it "forwards subject" do
-        Dummy.restrict!('!').where(number: 999).first.protector_subject.should == '!'
-        Dummy.restrict!('!').where(number: 999).to_a.first.protector_subject.should == '!'
-        Dummy.restrict!('!').new.protector_subject.should == '!'
-        Dummy.restrict!('!').first.fluffies.new.protector_subject.should == '!'
-        Dummy.first.fluffies.restrict!('!').new.protector_subject.should == '!'
+        expect(Dummy.restrict!('!').where(number: 999).first.protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').where(number: 999).to_a.first.protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').new.protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').first.fluffies.new.protector_subject).to eq '!'
+        expect(Dummy.first.fluffies.restrict!('!').new.protector_subject).to eq '!'
       end
 
       it "checks creatability" do
-        Dummy.restrict!('!').creatable?.should == false
-        Dummy.restrict!('!').where(number: 999).creatable?.should == false
+        expect(Dummy.restrict!('!').creatable?).to eq false
+        expect(Dummy.restrict!('!').where(number: 999).creatable?).to eq false
       end
 
       context "with open relation" do
         context "adequate", paranoid: false do
 
           it "checks existence" do
-            Dummy.any?.should == true
-            Dummy.restrict!('!').any?.should == true
+            expect(Dummy).to exist
+            expect(Dummy.restrict!('!')).to exist
           end
 
           it "counts" do
-            Dummy.count.should == 4
+            expect(Dummy.count).to eq 4
             dummy = Dummy.restrict!('!')
-            dummy.count.should == 4
-            dummy.protector_subject?.should == true
+            expect(dummy.count).to eq 4
+            expect(dummy.protector_subject?).to eq true
           end
 
           it "fetches" do
             fetched = Dummy.restrict!('!').to_a
 
-            Dummy.count.should == 4
-            fetched.length.should == 4
+            expect(Dummy.count).to eq 4
+            expect(fetched.length).to eq 4
           end
         end
 
         context "paranoid", paranoid: true do
           it "checks existence" do
-            Dummy.any?.should == true
-            Dummy.restrict!('!').any?.should == false
+            expect(Dummy).to exist
+            expect(Dummy.restrict!('!')).not_to exist
           end
 
           it "counts" do
-            Dummy.count.should == 4
+            expect(Dummy.count).to be 4
             dummy = Dummy.restrict!('!')
-            dummy.count.should == 0
-            dummy.protector_subject?.should == true
+            expect(dummy.count).to be 0
+            expect(dummy.protector_subject?).to be true
           end
 
           it "fetches" do
             fetched = Dummy.restrict!('!').to_a
 
-            Dummy.count.should == 4
-            fetched.length.should == 0
+            expect(Dummy.count).to be 4
+            expect(fetched.length).to be 0
           end
         end
       end
 
       context "with null relation" do
         it "checks existence" do
-          Dummy.any?.should == true
-          Dummy.restrict!('-').any?.should == false
+          expect(Dummy).to exist
+          expect(Dummy.restrict!('!')).not_to exist
         end
 
         it "counts" do
-          Dummy.count.should == 4
+          expect(Dummy.count).to eq 4
           dummy = Dummy.restrict!('-')
-          dummy.count.should == 0
-          dummy.protector_subject?.should == true
+          expect(dummy.count).to eq 0
+          expect(dummy.protector_subject?).to eq true
         end
 
         it "fetches" do
           fetched = Dummy.restrict!('-').to_a
 
-          Dummy.count.should == 4
-          fetched.length.should == 0
+          expect(Dummy.count).to eq 4
+          expect(fetched.length).to eq 0
         end
 
         it "keeps security scope when unscoped" do
-          Dummy.unscoped.restrict!('-').count.should == 0
-          Dummy.restrict!('-').unscoped.count.should == 0
+          expect(Dummy.unscoped.restrict!('-').count).to eq 0
+          expect(Dummy.restrict!('-').unscoped.count).to eq 0
         end
       end
 
       context "with active relation" do
         it "checks existence" do
-          Dummy.any?.should == true
-          Dummy.restrict!('+').any?.should == true
+          expect(Dummy).to exist
+          expect(Dummy.restrict!('+')).to exist
         end
 
         it "counts" do
-          Dummy.count.should == 4
+          expect(Dummy.count).to eq 4
           dummy = Dummy.restrict!('+')
-          dummy.count.should == 2
-          dummy.protector_subject?.should == true
+          expect(dummy.count).to eq 2
+          expect(dummy.protector_subject?).to eq true
         end
 
         it "fetches" do
           fetched = Dummy.restrict!('+').to_a
 
-          Dummy.count.should == 4
-          fetched.length.should == 2
+          expect(Dummy.count).to eq 4
+          expect(fetched.length).to eq 2
         end
 
         it "keeps security scope when unscoped" do
-          Dummy.unscoped.restrict!('+').count.should == 2
-          Dummy.restrict!('+').unscoped.count.should == 2
+          expect(Dummy.unscoped.restrict!('+').count).to eq 2
+          expect(Dummy.restrict!('+').unscoped.count).to eq 2
         end
       end
     end
@@ -270,75 +270,75 @@ if defined?(ActiveRecord)
 
       context "singular association" do
         it "forwards subject" do
-          Fluffy.restrict!('!').first.dummy.protector_subject.should == '!'
-          Fluffy.first.restrict!('!').dummy.protector_subject.should == '!'
+          expect(Fluffy.restrict!('!').first.dummy.protector_subject).to eq '!'
+          expect(Fluffy.first.restrict!('!').dummy.protector_subject).to eq '!'
         end
 
         it "forwards cached subject" do
-          Dummy.first.fluffies.restrict!('!').first.dummy.protector_subject.should == '!'
+          expect(Dummy.first.fluffies.restrict!('!').first.dummy.protector_subject).to eq '!'
         end
       end
 
       context "collection association" do
         it "forwards subject" do
-          Dummy.restrict!('!').first.fluffies.protector_subject.should == '!'
-          Dummy.first.restrict!('!').fluffies.protector_subject.should == '!'
-          Dummy.restrict!('!').first.fluffies.new.protector_subject.should == '!'
-          Dummy.first.restrict!('!').fluffies.new.protector_subject.should == '!'
-          Dummy.first.fluffies.restrict!('!').new.protector_subject.should == '!'
+          expect(Dummy.restrict!('!').first.fluffies.protector_subject).to eq '!'
+          expect(Dummy.first.restrict!('!').fluffies.protector_subject).to eq '!'
+          expect(Dummy.restrict!('!').first.fluffies.new.protector_subject).to eq '!'
+          expect(Dummy.first.restrict!('!').fluffies.new.protector_subject).to eq '!'
+          expect(Dummy.first.fluffies.restrict!('!').new.protector_subject).to eq '!'
         end
 
         context "with open relation" do
           context "adequate", paranoid: false do
 
             it "checks existence" do
-              Dummy.first.fluffies.any?.should == true
-              Dummy.first.restrict!('!').fluffies.any?.should == true
-              Dummy.first.fluffies.restrict!('!').any?.should == true
+              expect(Dummy.first.fluffies).to exist
+              expect(Dummy.first.restrict!('!').fluffies).to exist
+              expect(Dummy.first.fluffies.restrict!('!')).to exist
             end
 
             it "counts" do
-              Dummy.first.fluffies.count.should == 2
+              expect(Dummy.first.fluffies.count).to be 2
 
               fluffies = Dummy.first.restrict!('!').fluffies
-              fluffies.count.should == 2
-              fluffies.protector_subject?.should == true
+              expect(fluffies.count).to eq  2
+              expect(fluffies.protector_subject?).to eq true
 
               fluffies = Dummy.first.fluffies.restrict!('!')
-              fluffies.count.should == 2
-              fluffies.protector_subject?.should == true
+              expect(fluffies.count).to eq 2
+              expect(fluffies.protector_subject?).to eq true
             end
 
             it "fetches" do
-              Dummy.first.fluffies.count.should == 2
-              Dummy.first.restrict!('!').fluffies.length.should == 2
-              Dummy.first.fluffies.restrict!('!').length.should == 2
+              expect(Dummy.first.fluffies.count).to eq 2
+              expect(Dummy.first.restrict!('!').fluffies.length).to eq 2
+              expect(Dummy.first.fluffies.restrict!('!').length).to eq 2
             end
           end
 
           context "paranoid", paranoid: true do
             it "checks existence" do
-              Dummy.first.fluffies.any?.should == true
-              Dummy.first.restrict!('!').fluffies.any?.should == false
-              Dummy.first.fluffies.restrict!('!').any?.should == false
+              expect(Dummy.first.fluffies.any?).to eq true
+              expect(Dummy.first.restrict!('!').fluffies).not_to exist
+              expect(Dummy.first.fluffies.restrict!('!')).not_to exist
             end
 
             it "counts" do
-              Dummy.first.fluffies.count.should == 2
+              expect(Dummy.first.fluffies.count).to eq 2
 
               fluffies = Dummy.first.restrict!('!').fluffies
-              fluffies.count.should == 0
-              fluffies.protector_subject?.should == true
+              expect(fluffies.count).to be 0
+              expect(fluffies.protector_subject?).to eq true
 
               fluffies = Dummy.first.fluffies.restrict!('!')
-              fluffies.count.should == 0
-              fluffies.protector_subject?.should == true
+              expect(fluffies.count).to be 0
+              expect(fluffies.protector_subject?).to eq true
             end
 
             it "fetches" do
-              Dummy.first.fluffies.count.should == 2
-              Dummy.first.restrict!('!').fluffies.length.should == 0
-              Dummy.first.fluffies.restrict!('!').length.should == 0
+              expect(Dummy.first.fluffies.count).to eq 2
+              expect(Dummy.first.restrict!('!').fluffies.length).to eq 0
+              expect(Dummy.first.fluffies.restrict!('!').length).to eq 0
             end
           end
         end
@@ -346,53 +346,53 @@ if defined?(ActiveRecord)
 
       context "with null relation" do
         it "checks existence" do
-          Dummy.first.fluffies.any?.should == true
-          Dummy.first.restrict!('-').fluffies.any?.should == false
-          Dummy.first.fluffies.restrict!('-').any?.should == false
+          expect(Dummy.first.fluffies).to exist
+          expect(Dummy.first.restrict!('-').fluffies).not_to exist
+          expect(Dummy.first.fluffies.restrict!('-')).not_to exist
         end
 
         it "counts" do
-          Dummy.first.fluffies.count.should == 2
+          expect(Dummy.first.fluffies.count).to eq 2
 
           fluffies = Dummy.first.restrict!('-').fluffies
-          fluffies.count.should == 0
-          fluffies.protector_subject?.should == true
+          expect(fluffies.count).to eq 0
+          expect(fluffies.protector_subject?).to eq true
 
           fluffies = Dummy.first.fluffies.restrict!('-')
-          fluffies.count.should == 0
-          fluffies.protector_subject?.should == true
+          expect(fluffies.count).to eq 0
+          expect(fluffies.protector_subject?).to eq true
         end
 
         it "fetches" do
-          Dummy.first.fluffies.count.should == 2
-          Dummy.first.restrict!('-').fluffies.length.should == 0
-          Dummy.first.fluffies.restrict!('-').length.should == 0
+          expect(Dummy.first.fluffies.count).to eq 2
+          expect(Dummy.first.restrict!('-').fluffies.length).to eq 0
+          expect(Dummy.first.fluffies.restrict!('-').length).to eq 0
         end
       end
 
       context "with active relation" do
         it "checks existence" do
-          Dummy.first.fluffies.any?.should == true
-          Dummy.first.restrict!('+').fluffies.any?.should == true
-          Dummy.first.fluffies.restrict!('+').any?.should == true
+          expect(Dummy.first.fluffies.any?).to eq true
+          expect(Dummy.first.restrict!('+').fluffies).to exist
+          expect(Dummy.first.fluffies.restrict!('+')).to exist
         end
 
         it "counts" do
-          Dummy.first.fluffies.count.should == 2
+          expect(Dummy.first.fluffies.count).to eq 2
 
           fluffies = Dummy.first.restrict!('+').fluffies
-          fluffies.count.should == 1
-          fluffies.protector_subject?.should == true
+          expect(fluffies.count).to be 1
+          expect(fluffies.protector_subject?).to eq true
 
           fluffies = Dummy.first.fluffies.restrict!('+')
-          fluffies.count.should == 1
-          fluffies.protector_subject?.should == true
+          expect(fluffies.count).to be 1
+          expect(fluffies.protector_subject?).to eq true
         end
 
         it "fetches" do
-          Dummy.first.fluffies.count.should == 2
-          Dummy.first.restrict!('+').fluffies.length.should == 1
-          Dummy.first.fluffies.restrict!('+').length.should == 1
+          expect(Dummy.first.fluffies.count).to eq 2
+          expect(Dummy.first.restrict!('+').fluffies.length).to eq 1
+          expect(Dummy.first.fluffies.restrict!('+').length).to eq 1
         end
       end
     end
@@ -404,15 +404,15 @@ if defined?(ActiveRecord)
       describe "eager loading" do
         it "scopes" do
           d = Dummy.restrict!('+').includes(:fluffies)
-          d.length.should == 2
-          d.first.fluffies.length.should == 1
+          expect(d.length).to eq 2
+          expect(d.first.fluffies.length).to eq 1
         end
 
         context "joined to filtered association" do
           it "scopes" do
             d = Dummy.restrict!('+').includes(:fluffies).where(fluffies: {string: 'zomgstring'})
-            d.length.should == 2
-            d.first.fluffies.length.should == 1
+            expect(d.length).to eq 2
+            expect(d.first.fluffies.length).to eq 1
           end
         end
 
@@ -421,9 +421,9 @@ if defined?(ActiveRecord)
             d = Dummy.restrict!('+').includes(:bobbies, :fluffies).where(
               bobbies: {string: 'zomgstring'}, fluffies: {string: 'zomgstring'}
             )
-            d.length.should == 2
-            d.first.fluffies.length.should == 1
-            d.first.bobbies.length.should == 2
+            expect(d.length).to eq 2
+            expect(d.first.fluffies.length).to eq 1
+            expect(d.first.bobbies.length).to eq 2
           end
         end
 
@@ -433,9 +433,9 @@ if defined?(ActiveRecord)
               fluffies: {string: 'zomgstring'},
               loonies: {string: 'zomgstring'}
             )
-            d.length.should == 2
-            d.first.fluffies.length.should == 1
-            d.first.fluffies.first.loony.should be_a_kind_of(Loony)
+            expect(d.length).to be 2
+            expect(d.first.fluffies.length).to eq 1
+            expect(d.first.fluffies.first.loony).to be_a_kind_of(Loony)
           end
         end
       end
@@ -480,9 +480,9 @@ if defined?(ActiveRecord)
 
               expect { d.active! }.to_not raise_error
 
-              d.number.should == 'active'
-              d.active?.should == true
-              d.archived?.should == false
+              expect(d.number).to eq 'active'
+              expect(d.active?).to eq true
+              expect(d.archived?).to eq false
 
               d.delete
             end

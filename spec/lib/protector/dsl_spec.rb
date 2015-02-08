@@ -7,8 +7,8 @@ describe Protector::DSL do
     end
 
     it "defines proper methods" do
-      @base.instance_methods.should include(:restrict!)
-      @base.instance_methods.should include(:protector_subject)
+      expect(@base.instance_methods).to include(:restrict!)
+      expect(@base.instance_methods).to include(:protector_subject)
     end
 
     it "throws error for empty subect" do
@@ -24,13 +24,13 @@ describe Protector::DSL do
     it "remembers protection subject" do
       base = @base.new
       base.restrict!("universe")
-      base.protector_subject.should == "universe"
+      expect(base.protector_subject).to eq "universe"
     end
 
     it "forgets protection subject" do
       base = @base.new
       base.restrict!("universe")
-      base.protector_subject.should == "universe"
+      expect(base.protector_subject).to eq "universe"
       base.unrestrict!
       expect { base.protector_subject }.to raise_error
     end
@@ -39,9 +39,9 @@ describe Protector::DSL do
       base = @base.new
       base.restrict!("universe")
 
-      base.protector_subject?.should == true
+      expect(base.protector_subject?).to eq true
       Protector.insecurely do
-        base.protector_subject?.should == false
+        expect(base.protector_subject?).to eq false
       end
     end
 
@@ -49,10 +49,10 @@ describe Protector::DSL do
       base = @base.new
       base.restrict!("universe")
 
-      base.protector_subject?.should == true
+      expect(base.protector_subject?).to eq true
       Protector.insecurely do
         Protector.insecurely do
-          base.protector_subject?.should == false
+          expect(base.protector_subject?).to eq false
         end
       end
     end
@@ -74,7 +74,7 @@ describe Protector::DSL do
         protect do; end
       end
 
-      @entry.protector_meta.should be_an_instance_of(Protector::DSL::Meta)
+      expect(@entry.protector_meta).to be_an_instance_of(Protector::DSL::Meta)
     end
   end
 
@@ -93,14 +93,14 @@ describe Protector::DSL do
         }
 
         @meta << lambda {|user|
-          user.should  == 'user' if user
+          raise "wrong user" if user && user != 'user'
 
           cannot :read, %w(field5), :field4
         }
 
         @meta << lambda {|user, entry|
-          user.should  == 'user' if user
-          entry.should == 'entry' if user
+          raise "wrong user" if user && user != 'user'
+          raise "wrong entry" if user && entry != 'entry'
 
           can :update, %w(field1 field2),
             field3: 1,
@@ -118,14 +118,14 @@ describe Protector::DSL do
       context "adequate", paranoid: false do
         it "sets scoped?" do
           data = @meta.evaluate(nil, 'entry')
-          data.scoped?.should == false
+          expect(data.scoped?).to eq false
         end
       end
 
       context "paranoid", paranoid: true do
         it "sets scoped?" do
           data = @meta.evaluate(nil, 'entry')
-          data.scoped?.should == true
+          expect(data.scoped?).to eq true
         end
       end
 
@@ -133,11 +133,11 @@ describe Protector::DSL do
         let(:data) { @meta.evaluate('user', 'entry') }
 
         it "sets relation" do
-          data.relation.should == 'relation'
+          expect(data.relation).to eq 'relation'
         end
 
         it "sets access" do
-          data.access.should == {
+          expect(data.access).to eq({
             update: {
               "field1" => nil,
               "field2" => nil,
@@ -150,37 +150,37 @@ describe Protector::DSL do
               "field2" => nil,
               "field3" => nil
             }
-          }
+          })
         end
 
         it "marks destroyable" do
-          data.destroyable?.should == true
-          data.can?(:destroy).should == true
+          expect(data.destroyable?).to eq true
+          expect(data.can?(:destroy)).to eq true
         end
 
         context "marks updatable" do
           it "with defaults" do
-            data.updatable?.should == true
-            data.can?(:update).should == true
+            expect(data.updatable?).to eq true
+            expect(data.can?(:update)).to eq true
           end
 
           it "respecting lambda", dev: true do
-            data.updatable?('field5' => 5).should == true
-            data.updatable?('field5' => 3).should == false
+            expect(data.updatable?('field5' => 5)).to eq true
+            expect(data.updatable?('field5' => 3)).to eq false
           end
         end
 
         it "gets first unupdatable field" do
-          data.first_unupdatable_field('field1' => 1, 'field6' => 2, 'field7' => 3).should == 'field6'
+          expect(data.first_unupdatable_field('field1' => 1, 'field6' => 2, 'field7' => 3)).to eq 'field6'
         end
 
         it "marks creatable" do
-          data.creatable?.should == false
-          data.can?(:create).should == false
+          expect(data.creatable?).to eq false
+          expect(data.can?(:create)).to eq false
         end
 
         it "gets first uncreatable field" do
-          data.first_uncreatable_field('field1' => 1, 'field6' => 2).should == 'field1'
+          expect(data.first_uncreatable_field('field1' => 1, 'field6' => 2)).to eq 'field1'
         end
       end
     end
@@ -197,9 +197,9 @@ describe Protector::DSL do
 
       it "evaluates" do
         data = ActiveSupport::Deprecation.silence { @meta.evaluate('user', 'entry') }
-        data.can?(:read).should == true
-        data.can?(:read, :field1).should == true
-        data.can?(:read, :field2).should == false
+        expect(data.can?(:read)).to be true
+        expect(data.can?(:read, :field1)).to be true
+        expect(data.can?(:read, :field2)).to be false
       end
     end
 
@@ -216,14 +216,14 @@ describe Protector::DSL do
 
       it "sets field-level restriction" do
         box = @meta.evaluate('user', 'entry')
-        box.can?(:drink, :field1).should == true
-        box.can?(:drink).should == true
+        expect(box.can?(:drink, :field1)).to be true
+        expect(box.can?(:drink)).to be true
       end
 
       it "sets field-level protection" do
         box = @meta.evaluate('user', 'entry')
-        box.can?(:eat, :field1).should == false
-        box.can?(:eat).should == true
+        expect(box.can?(:eat, :field1)).to be false
+        expect(box.can?(:eat)).to be true
       end
     end
 
@@ -232,11 +232,11 @@ describe Protector::DSL do
       meta = Protector::DSL::Meta.new(nil, nil){%w(field1)}
 
       meta << lambda {
-        can :create, field1: lambda {|x| x.protector_subject?.should == false}
+        can :create, field1: lambda {|x| raise "lambda recursion" if x.protector_subject? }
       }
 
       box = meta.evaluate('context', 'instance')
-      box.creatable?('field1' => base.new.restrict!(nil))
+      expect{ box.creatable?('field1' => base.new.restrict!(nil)) }.not_to raise_error
     end
   end
 end

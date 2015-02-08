@@ -39,12 +39,12 @@ if defined?(Sequel)
 
     describe Protector::Adapters::Sequel do
       it "finds out whether object is Sequel relation" do
-        Protector::Adapters::Sequel.is?(Dummy).should == true
-        Protector::Adapters::Sequel.is?(Dummy.where).should == true
+        expect(Protector::Adapters::Sequel.is?(Dummy)).to eq true
+        expect(Protector::Adapters::Sequel.is?(Dummy.where)).to eq true
       end
 
       it "sets the adapter" do
-        Dummy.restrict!('!').protector_meta.adapter.should == Protector::Adapters::Sequel
+        expect(Dummy.restrict!('!').protector_meta.adapter).to eq Protector::Adapters::Sequel
       end
     end
 
@@ -58,13 +58,13 @@ if defined?(Sequel)
       end
 
       it "includes" do
-        Dummy.ancestors.should include(Protector::Adapters::Sequel::Model)
+        expect(Dummy.ancestors).to include(Protector::Adapters::Sequel::Model)
       end
 
       it "scopes" do
         scope = Dummy.restrict!('!')
-        scope.should be_a_kind_of Sequel::Dataset
-        scope.protector_subject.should == '!'
+        expect(scope).to be_a_kind_of Sequel::Dataset
+        expect(scope.protector_subject).to eq '!'
       end
 
       it_behaves_like "a model"
@@ -75,115 +75,115 @@ if defined?(Sequel)
     #
     describe Protector::Adapters::Sequel::Dataset do
       it "includes" do
-        Dummy.none.class.ancestors.should include(Protector::DSL::Base)
+        expect(Dummy.none.class.ancestors).to include(Protector::DSL::Base)
       end
 
       it "saves subject" do
-        Dummy.restrict!('!').where(number: 999).protector_subject.should == '!'
+        expect(Dummy.restrict!('!').where(number: 999).protector_subject).to eq '!'
       end
 
       it "forwards subject" do
-        Dummy.restrict!('!').where(number: 999).first.protector_subject.should == '!'
-        Dummy.restrict!('!').where(number: 999).to_a.first.protector_subject.should == '!'
-        Dummy.restrict!('!').eager_graph(fluffies: :loony).all.first.fluffies.first.loony.protector_subject.should == '!'
+        expect(Dummy.restrict!('!').where(number: 999).first.protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').where(number: 999).to_a.first.protector_subject).to eq '!'
+        expect(Dummy.restrict!('!').eager_graph(fluffies: :loony).all.first.fluffies.first.loony.protector_subject).to eq '!'
       end
 
       it "checks creatability" do
-        Dummy.restrict!('!').creatable?.should == false
-        Dummy.restrict!('!').where(number: 999).creatable?.should == false
+        expect(Dummy.restrict!('!').creatable?).to eq false
+        expect(Dummy.restrict!('!').where(number: 999).creatable?).to eq false
       end
 
       context "with open relation" do
         context "adequate", paranoid: false do
           it "checks existence" do
-            Dummy.any?.should == true
-            Dummy.restrict!('!').any?.should == true
+            expect(Dummy.any?).to be true
+            expect(Dummy.restrict!('!').any?).to be true
           end
 
           it "counts" do
-            Dummy.count.should == 4
-            Dummy.restrict!('!').count.should == 4
+            expect(Dummy.count).to eq 4
+            expect(Dummy.restrict!('!').count).to eq 4
           end
 
           it "fetches first" do
-            Dummy.restrict!('!').first.should be_a_kind_of(Dummy)
+            expect(Dummy.restrict!('!').first).to be_a_kind_of(Dummy)
           end
 
           it "fetches all" do
             fetched = Dummy.restrict!('!').to_a
 
-            Dummy.count.should == 4
-            fetched.length.should == 4
+            expect(Dummy.count).to eq 4
+            expect(fetched.length).to eq 4
           end
         end
 
         context "paranoid", paranoid: true do
           it "checks existence" do
-            Dummy.any?.should == true
-            Dummy.restrict!('!').any?.should == false
+            expect(Dummy.any?).to be true
+            expect(Dummy.restrict!('!').any?).to be false
           end
 
           it "counts" do
-            Dummy.count.should == 4
-            Dummy.restrict!('!').count.should == 0
+            expect(Dummy.count).to eq 4
+            expect(Dummy.restrict!('!').count).to eq 0
           end
 
           it "fetches first" do
-            Dummy.restrict!('!').first.should == nil
+            expect(Dummy.restrict!('!').first).to be_nil
           end
 
           it "fetches all" do
             fetched = Dummy.restrict!('!').to_a
 
-            Dummy.count.should == 4
-            fetched.length.should == 0
+            expect(Dummy.count).to eq 4
+            expect(fetched.length).to eq 0
           end
         end
       end
 
       context "with null relation" do
         it "checks existence" do
-          Dummy.any?.should == true
-          Dummy.restrict!('-').any?.should == false
+          expect(Dummy.any?).to be true
+          expect(Dummy.restrict!('-').any?).to be false
         end
 
         it "counts" do
-          Dummy.count.should == 4
-          Dummy.restrict!('-').count.should == 0
+          expect(Dummy.count).to eq 4
+          expect(Dummy.restrict!('-').count).to eq 0
         end
 
         it "fetches first" do
-          Dummy.restrict!('-').first.should == nil
+          expect(Dummy.restrict!('-').first).to be_nil
         end
 
         it "fetches all" do
           fetched = Dummy.restrict!('-').to_a
 
-          Dummy.count.should == 4
-          fetched.length.should == 0
+          expect(Dummy.count).to eq 4
+          expect(fetched.length).to eq 0
         end
       end
 
       context "with active relation" do
         it "checks existence" do
-          Dummy.any?.should == true
-          Dummy.restrict!('+').any?.should == true
+          expect(Dummy.any?).to be true
+          expect(Dummy.restrict!('+').any?).to be true
         end
 
         it "counts" do
-          Dummy.count.should == 4
-          Dummy.restrict!('+').count.should == 2
+          expect(Dummy.count).to eq 4
+          expect(Dummy.restrict!('+').count).to eq 2
         end
 
         it "fetches first" do
-          Dummy.restrict!('+').first.should be_a_kind_of Dummy
+          expect(Dummy.restrict!('+').first).to be_a_kind_of Dummy
         end
 
         it "fetches all" do
           fetched = Dummy.restrict!('+').to_a
 
-          Dummy.count.should == 4
-          fetched.length.should == 2
+          expect(Dummy.count).to eq 4
+          expect(fetched.length).to eq 2
         end
       end
     end
@@ -197,19 +197,19 @@ if defined?(Sequel)
         context "straight" do
           it "scopes" do
             d = Dummy.restrict!('+').eager(:fluffies)
-            d.count.should == 2
-            d.first.fluffies.length.should == 1
+            expect(d.count).to eq 2
+            expect(d.first.fluffies.length).to eq 1
           end
         end
 
         context "graph" do
           it "scopes" do
             d = Dummy.restrict!('+').eager_graph(fluffies: :loony)
-            d.count.should == 4
+            expect(d.count).to eq 4
             d = d.all
-            d.length.should == 2 # which is terribly sick :doh:
-            d.first.fluffies.length.should == 1
-            d.first.fluffies.first.loony.should be_a_kind_of Loony
+            expect(d.length).to eq 2 # which is terribly sick :doh:
+            expect(d.first.fluffies.length).to eq 1
+            expect(d.first.fluffies.first.loony).to be_a_kind_of Loony
           end
         end
       end

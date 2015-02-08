@@ -2,8 +2,10 @@ shared_examples_for "a model" do
   it "evaluates meta properly" do
     dummy.instance_eval do
       protect do |subject, entry|
-        subject.should == '!'
-        entry.protector_subject?.should == false
+        #expect(subject).to eq '!'
+        raise "wrong subject" if subject != '!'
+        raise "entry shouldn't be an protector_subject" if entry.protector_subject? != false
+        #expect(entry.protector_subject?).to eq false
 
         scope { limit(5) }
 
@@ -16,9 +18,9 @@ shared_examples_for "a model" do
     fields = Hash[*%w(id string number text dummy_id).map{|x| [x, nil]}.flatten]
     meta   = dummy.new.restrict!('!').protector_meta
 
-    meta.access[:read].should   == fields
-    meta.access[:create].should == fields
-    meta.access[:update].should == fields
+    expect(meta.access[:read]  ).to eq fields
+    expect(meta.access[:create]).to eq fields
+    expect(meta.access[:update]).to eq fields
   end
 
   it "respects inheritance" do
@@ -34,17 +36,17 @@ shared_examples_for "a model" do
       end
     end
 
-    dummy.protector_meta.evaluate(nil, nil).access.should == {read: {"test"=>nil}}
-    attempt.protector_meta.evaluate(nil, nil).access.should == {read: {"test"=>nil}, create: {"test"=>nil}}
+    expect(dummy.protector_meta.evaluate(nil, nil).access).to eq( {read: {"test"=>nil}} )
+    expect(attempt.protector_meta.evaluate(nil, nil).access).to eq( {read: {"test"=>nil}, create: {"test"=>nil}} )
   end
 
   it "drops meta on restrict" do
     d = Dummy.first
 
     d.restrict!('!').protector_meta
-    d.instance_variable_get('@protector_meta').should_not == nil
+    expect(d.instance_variable_get('@protector_meta')).not_to be_nil
     d.restrict!('!')
-    d.instance_variable_get('@protector_meta').should == nil
+    expect(d.instance_variable_get('@protector_meta')).to be_nil
   end
 
   it "doesn't get stuck with non-existing tables" do
@@ -56,20 +58,20 @@ shared_examples_for "a model" do
 
   describe "visibility" do
     it "marks blocked" do
-      Dummy.first.restrict!('-').visible?.should == false
+      expect(Dummy.first.restrict!('-').visible?).to eq false
     end
 
     context "adequate", paranoid: false do
       it "marks allowed" do
-        Dummy.first.restrict!('!').visible?.should == true
-        Dummy.first.restrict!('+').visible?.should == true
+        expect(Dummy.first.restrict!('!').visible?).to eq true
+        expect(Dummy.first.restrict!('+').visible?).to eq true
       end
     end
 
     context "paranoid", paranoid: true do
       it "marks allowed" do
-        Dummy.first.restrict!('!').visible?.should == false
-        Dummy.first.restrict!('+').visible?.should == true
+        expect(Dummy.first.restrict!('!').visible?).to eq false
+        expect(Dummy.first.restrict!('+').visible?).to eq true
       end
     end
   end
@@ -86,10 +88,10 @@ shared_examples_for "a model" do
       end
 
       d = dummy.first.restrict!('!')
-      d.number.should == nil
-      d[:number].should == nil
-      read_attribute(d, :number).should_not == nil
-      d.string.should == 'zomgstring'
+      expect(d.number).to be_nil
+      expect(d[:number]).to be_nil
+      expect(read_attribute(d, :number)).not_to be_nil
+      expect(d.string).to eq 'zomgstring'
     end
 
     it "shows fields" do
@@ -100,10 +102,10 @@ shared_examples_for "a model" do
       end
 
       d = dummy.first.restrict!('!')
-      d.number.should_not == nil
-      d[:number].should_not == nil
-      d['number'].should_not == nil
-      read_attribute(d, :number).should_not == nil
+      expect(d.number).not_to be_nil
+      expect(d[:number]).not_to be_nil
+      expect(d['number']).not_to be_nil
+      expect(read_attribute(d, :number)).not_to be_nil
     end
   end
 
@@ -120,19 +122,19 @@ shared_examples_for "a model" do
 
       it "handles empty creations" do
         d = dummy.new.restrict!('!')
-        d.can?(:create).should == false
-        d.creatable?.should == false
-        d.should invalidate
+        expect(d.can?(:create)).to eq false
+        expect(d.creatable?).to eq false
+        expect(d).to invalidate
       end
 
       it "marks blocked" do
         d = dummy.new(string: 'bam', number: 1)
-        d.restrict!('!').creatable?.should == false
+        expect(d.restrict!('!').creatable?).to eq false
       end
 
       it "invalidates" do
         d = dummy.new(string: 'bam', number: 1).restrict!('!')
-        d.should invalidate
+        expect(d).to invalidate
       end
     end
 
@@ -147,23 +149,23 @@ shared_examples_for "a model" do
 
       it "marks blocked" do
         d = dummy.new(string: 'bam', number: 1).restrict!('!')
-        d.creatable?.should == false
+        expect(d.creatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.new(string: 'bam').restrict!('!')
         $debug = true
-        d.creatable?.should == true
+        expect(d.creatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.new(string: 'bam', number: 1).restrict!('!')
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.new(string: 'bam').restrict!('!')
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -178,22 +180,22 @@ shared_examples_for "a model" do
 
       it "marks blocked" do
         d = dummy.new(string: 'bam')
-        d.restrict!('!').creatable?.should == false
+        expect(d.restrict!('!').creatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.new(string: '12345')
-        d.restrict!('!').creatable?.should == true
+        expect(d.restrict!('!').creatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.new(string: 'bam').restrict!('!')
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.new(string: '12345').restrict!('!')
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -208,22 +210,22 @@ shared_examples_for "a model" do
 
       it "marks blocked" do
         d = dummy.new(number: 500)
-        d.restrict!('!').creatable?.should == false
+        expect(d.restrict!('!').creatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.new(number: 2)
-        d.restrict!('!').creatable?.should == true
+        expect(d.restrict!('!').creatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.new(number: 500).restrict!('!')
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.new(number: 2).restrict!('!')
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -238,22 +240,22 @@ shared_examples_for "a model" do
 
       it "marks blocked" do
         d = dummy.new(number: 500)
-        d.restrict!('!').creatable?.should == false
+        expect(d.restrict!('!').creatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.new(number: 5)
-        d.restrict!('!').creatable?.should == true
+        expect(d.restrict!('!').creatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.new(number: 500).restrict!('!')
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.new(number: 5).restrict!('!')
-        d.should validate
+        expect(d).to validate
       end
     end
   end
@@ -272,13 +274,13 @@ shared_examples_for "a model" do
       it "marks blocked" do
         d = dummy.first
         assign!(d, string: 'bam', number: 1)
-        d.restrict!('!').updatable?.should == false
+        expect(d.restrict!('!').updatable?).to eq false
       end
 
       it "invalidates" do
         d = dummy.first.restrict!('!')
         assign!(d, string: 'bam', number: 1)
-        d.should invalidate
+        expect(d).to invalidate
       end
     end
 
@@ -294,25 +296,25 @@ shared_examples_for "a model" do
       it "marks blocked" do
         d = dummy.first
         assign!(d, string: 'bam', number: 1)
-        d.restrict!('!').updatable?.should == false
+        expect(d.restrict!('!').updatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.first
         assign!(d, string: 'bam')
-        d.restrict!('!').updatable?.should == true
+        expect(d.restrict!('!').updatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.first.restrict!('!')
         assign!(d, string: 'bam', number: 1)
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.first.restrict!('!')
         assign!(d, string: 'bam')
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -328,25 +330,25 @@ shared_examples_for "a model" do
       it "marks blocked" do
         d = dummy.first
         assign!(d, string: 'bam')
-        d.restrict!('!').updatable?.should == false
+        expect(d.restrict!('!').updatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.first
         assign!(d, string: '12345')
-        d.restrict!('!').updatable?.should == true
+        expect(d.restrict!('!').updatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.first.restrict!('!')
         assign!(d, string: 'bam')
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.first.restrict!('!')
         assign!(d, string: '12345')
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -362,25 +364,25 @@ shared_examples_for "a model" do
       it "marks blocked" do
         d = dummy.first
         assign!(d, number: 500)
-        d.restrict!('!').updatable?.should == false
+        expect(d.restrict!('!').updatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.first
         assign!(d, number: 2)
-        d.restrict!('!').updatable?.should == true
+        expect(d.restrict!('!').updatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.first.restrict!('!')
         assign!(d, number: 500)
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.first.restrict!('!')
         assign!(d, number: 2)
-        d.should validate
+        expect(d).to validate
       end
     end
 
@@ -396,25 +398,25 @@ shared_examples_for "a model" do
       it "marks blocked" do
         d = dummy.first
         assign!(d, number: 500)
-        d.restrict!('!').updatable?.should == false
+        expect(d.restrict!('!').updatable?).to eq false
       end
 
       it "marks allowed" do
         d = dummy.first
         assign!(d, number: 5)
-        d.restrict!('!').updatable?.should == true
+        expect(d.restrict!('!').updatable?).to eq true
       end
 
       it "invalidates" do
         d = dummy.first.restrict!('!')
         assign!(d, number: 500)
-        d.should invalidate
+        expect(d).to invalidate
       end
 
       it "validates" do
         d = dummy.first.restrict!('!')
         assign!(d, number: 5)
-        d.should validate
+        expect(d).to validate
       end
     end
   end
@@ -428,7 +430,7 @@ shared_examples_for "a model" do
         protect do; end
       end
 
-      dummy.first.restrict!('!').destroyable?.should == false
+      expect(dummy.first.restrict!('!').destroyable?).to eq false
     end
 
     it "marks allowed" do
@@ -436,7 +438,7 @@ shared_examples_for "a model" do
         protect do; can :destroy; end
       end
 
-      dummy.first.restrict!('!').destroyable?.should == true
+      expect(dummy.first.restrict!('!').destroyable?).to eq true
     end
 
     it "invalidates" do
@@ -445,7 +447,7 @@ shared_examples_for "a model" do
       end
 
       d = dummy.create.restrict!('!')
-      d.should survive
+      expect(d).to survive
     end
 
     it "validates" do
@@ -454,7 +456,7 @@ shared_examples_for "a model" do
       end
 
       d = dummy.create.restrict!('!')
-      d.should destroy
+      expect(d).to destroy
     end
   end
 
@@ -465,16 +467,16 @@ shared_examples_for "a model" do
     context "(has_many)" do
       context "adequate", paranoid: false do
         it "loads" do
-          Dummy.first.restrict!('!').fluffies.length.should == 2
-          Dummy.first.restrict!('+').fluffies.length.should == 1
-          Dummy.first.restrict!('-').fluffies.empty?.should == true
+          expect(Dummy.first.restrict!('!').fluffies.length).to eq 2
+          expect(Dummy.first.restrict!('+').fluffies.length).to eq 1
+          expect(Dummy.first.restrict!('-').fluffies.empty?).to eq true
         end
       end
       context "paranoid", paranoid: true do
         it "loads" do
-          Dummy.first.restrict!('!').fluffies.empty?.should == true
-          Dummy.first.restrict!('+').fluffies.length.should == 1
-          Dummy.first.restrict!('-').fluffies.empty?.should == true
+          expect(Dummy.first.restrict!('!').fluffies.empty?).to eq true
+          expect(Dummy.first.restrict!('+').fluffies.length).to eq 1
+          expect(Dummy.first.restrict!('-').fluffies.empty?).to eq true
         end
       end
     end
@@ -482,19 +484,19 @@ shared_examples_for "a model" do
     context "(belongs_to)" do
       context "adequate", paranoid: false do
         it "passes subject" do
-          Fluffy.first.restrict!('!').dummy.protector_subject.should == '!'
+          expect(Fluffy.first.restrict!('!').dummy.protector_subject).to eq '!'
         end
 
         it "loads" do
-          Fluffy.first.restrict!('!').dummy.should be_a_kind_of(Dummy)
-          Fluffy.first.restrict!('-').dummy.should == nil
+          expect(Fluffy.first.restrict!('!').dummy).to be_a_kind_of(Dummy)
+          expect(Fluffy.first.restrict!('-').dummy).to eq nil
         end
       end
 
       context "paranoid", paranoid: true do
         it "loads" do
-          Fluffy.first.restrict!('!').dummy.should == nil
-          Fluffy.first.restrict!('-').dummy.should == nil
+          expect(Fluffy.first.restrict!('!').dummy).to eq nil
+          expect(Fluffy.first.restrict!('-').dummy).to eq nil
         end
       end
     end

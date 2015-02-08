@@ -1,14 +1,14 @@
 RSpec::Matchers.define :invalidate do
   match do |actual|
-    actual.save.should == false
-    actual.errors[:base][0].starts_with?("Access denied to").should == true
+    expect(actual.save).to eq false
+    expect(actual.errors[:base][0].starts_with?("Access denied to")).to eq true
   end
 end
 
 RSpec::Matchers.define :validate do
   match do |actual|
     actual.class.transaction do
-      actual.save.should == true
+      expect(actual.save).to eq true
       raise ActiveRecord::Rollback
     end
 
@@ -19,7 +19,7 @@ end
 RSpec::Matchers.define :destroy do
   match do |actual|
     actual.class.transaction do
-      actual.destroy.should == actual
+      expect(actual.destroy).to be actual
       raise ActiveRecord::Rollback
     end
 
@@ -32,7 +32,7 @@ end
 RSpec::Matchers.define :survive do
   match do |actual|
     actual.class.transaction do
-      actual.destroy.should == false
+      expect(actual.destroy).to be false
       raise ActiveRecord::Rollback
     end
 
